@@ -82,7 +82,7 @@
 
     local themes = {
         preset = {
-            accent = hex("FF0035"),
+            accent = rgb(155, 150, 219),
         }, 
 
         utility = {
@@ -749,10 +749,10 @@
         function library:tab(properties)
             local cfg = {
                 name = properties.name or properties.Name or "visuals"; 
-                icon = properties.icon or properties.Icon or nil;  -- No default icon
+                icon = properties.icon or properties.Icon or "http://www.roblox.com/asset/?id=6034767608";
                 
                 -- multi 
-                tabs = properties.tabs or properties.Tabs  -- No default = no sub-tabs
+                tabs = properties.tabs or properties.Tabs or {"Main", "Misc.", "Settings"};
                 pages = {}; -- data store for multi sections
                 current_multi; 
                 
