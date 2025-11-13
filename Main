@@ -204,7 +204,14 @@
     end
 --
 
-local Lucide = {}
+-- Lucide Icons System - Add this RIGHT HERE
+do
+    local Lucide = {}
+
+    local IS_GETCUSTOMASSET_BROKEN = false
+
+    if writefile and isfolder and makefolder and getcustomasset then
+        local Lucide = {}
 
 local IS_GETCUSTOMASSET_BROKEN = false
 
@@ -284,6 +291,11 @@ function Lucide.GetAsset(name: string)
 end
 
 return Lucide
+    end
+
+    -- Make it available to the library
+    library.Lucide = Lucide
+end
 
 -- Library functions 
     -- Misc functions
