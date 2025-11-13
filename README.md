@@ -1,4 +1,4 @@
-#BASIC SETUP
+**BASIC SETUP**
 ```lua
 -- Load the library
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Seriously56/dwadada/main/Main"))()
