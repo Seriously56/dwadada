@@ -752,7 +752,7 @@
                 icon = properties.icon or properties.Icon or "http://www.roblox.com/asset/?id=6034767608";
                 
                 -- multi 
-                tabs = properties.tabs or properties.Tabs or {"Main", "Misc.", "Settings"};
+                tabs = properties.tabs or properties.Tabs  -- No default = no sub-tabs
                 pages = {}; -- data store for multi sections
                 current_multi; 
                 
