@@ -252,63 +252,136 @@ local settings = section:settings({})
 ```
 **EXAMPLE SCRIPT**
 ```lua
+-- Load the library
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Seriously56/dwadada/main/Main"))()
 
+-- Create main window
 local window = library:window({
     name = "My Script",
     suffix = "tech",
-    game_name = "Example Game"
+    game_name = "Your Game Name",
+    size = UDim2.new(0, 700, 0, 565)
 })
 
-local combat, visuals, misc = window:tab({
+-- Create tabs
+local combat_tab, visuals_tab, misc_tab = window:tab({
     name = "Main",
     tabs = {"Combat", "Visuals", "Misc"}
 })
 
--- Combat Tab
-combat:section({name = "Aimbot"}):toggle({
-    name = "Enable Aimbot",
-    flag = "aimbot",
-    default = false
+-- COMBAT TAB
+local combat_col = combat_tab:column({size = 0.5})
+local aimbot_section = combat_col:section({
+    name = "Aimbot",
+    icon = "rbxassetid://6034767608"
 })
 
-combat:section({name = "Settings"}):slider({
+aimbot_section:toggle({
+    name = "Enable Aimbot",
+    flag = "aimbot_enabled",
+    default = false,
+    callback = function(state)
+        print("Aimbot:", state)
+    end
+})
+
+aimbot_section:slider({
     name = "Aimbot FOV",
     flag = "aimbot_fov",
     min = 1,
     max = 360,
-    default = 90
-})
-
--- Visuals Tab
-visuals:section({name = "ESP"}):toggle({
-    name = "Player ESP",
-    flag = "esp",
-    default = true
-})
-
-visuals:section({name = "Colors"}):colorpicker({
-    name = "ESP Color",
-    flag = "esp_color",
-    color = Color3.fromRGB(0, 255, 0)
-})
-
--- Misc Tab
-misc:section({name = "Settings"}):keybind({
-    name = "UI Toggle",
-    flag = "ui_toggle",
-    key = Enum.KeyCode.Insert
-})
-
-misc:section({name = "Utilities"}):button({
-    name = "Print All Flags",
-    callback = function()
-        for flag, value in pairs(library.flags) do
-            print(flag, "=", value)
-        end
+    default = 90,
+    suffix = "°",
+    callback = function(value)
+        print("FOV:", value)
     end
 })
 
--- Add config system
+aimbot_section:keybind({
+    name = "Aimbot Key",
+    flag = "aimbot_key",
+    callback = function(state)
+        print("Aimbot key:", state)
+    end
+})
+
+-- VISUALS TAB
+local visuals_col = visuals_tab:column({size = 0.5})
+local esp_section = visuals_col:section({
+    name = "ESP",
+    icon = "rbxassetid://6034767608"
+})
+
+esp_section:toggle({
+    name = "Player ESP",
+    flag = "esp_enabled",
+    default = true,
+    callback = function(state)
+        print("ESP:", state)
+    end
+})
+
+esp_section:colorpicker({
+    name = "ESP Color",
+    flag = "esp_color",
+    color = Color3.fromRGB(0, 255, 0),
+    callback = function(color, transparency)
+        print("ESP Color:", color, "Transparency:", transparency)
+    end
+})
+
+esp_section:dropdown({
+    name = "ESP Type",
+    flag = "esp_type",
+    options = {"Box", "Tracer", "Name", "All"},
+    default = "Box",
+    callback = function(selected)
+        print("ESP Type:", selected)
+    end
+})
+
+-- MISC TAB
+local misc_col = misc_tab:column({size = 0.5})
+local movement_section = misc_col:section({
+    name = "Movement",
+    icon = "rbxassetid://6034767608"
+})
+
+movement_section:toggle({
+    name = "Speed Hack",
+    flag = "speed_enabled",
+    default = false,
+    callback = function(state)
+        print("Speed Hack:", state)
+    end
+})
+
+movement_section:slider({
+    name = "Speed Multiplier",
+    flag = "speed_multiplier",
+    min = 1,
+    max = 10,
+    default = 2,
+    callback = function(value)
+        print("Speed Multiplier:", value)
+    end
+})
+
+movement_section:button({
+    name = "Reset Character",
+    callback = function()
+        print("Resetting character...")
+        -- Your reset code here
+    end
+})
+
+-- Add config system (optional)
 library:init_config(window)
+
+-- Show success notification
+library.notifications:create_notification({
+    name = "Script Loaded",
+    info = "UI successfully initialized!",
+    lifetime = 3
+})
 ```
