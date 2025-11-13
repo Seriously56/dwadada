@@ -1,5 +1,5 @@
 Basic Setup
-lua
+```lua
 -- Load the library
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Seriously56/dwadada/main/Main"))()
 
@@ -11,6 +11,7 @@ local window = library:window({
     size = UDim2.new(0, 700, 0, 565) -- Window size
 })
 Window & Layout
+```
 Creating Tabs
 lua
 -- Single tab
