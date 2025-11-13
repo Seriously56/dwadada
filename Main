@@ -211,7 +211,6 @@ do
     local IS_GETCUSTOMASSET_BROKEN = false
 
     if writefile and isfolder and makefolder and getcustomasset then
-        local Lucide = {}
 
 local IS_GETCUSTOMASSET_BROKEN = false
 
