@@ -1,19 +1,25 @@
--- Variables
-    local scale = 0.5
-    local uis = Services.UserInputService
-    local players = Services.Players
-    local ws = Services.Workspace
-    local rs = Services.ReplicatedStorage
-    local http_service = Services.HttpService
-    local gui_service = Services.GuiService
-    local lighting = Services.Lighting
-    local run = Services.RunService
-    local stats = Services.Stats
-    local coregui = Services.CoreGui
-    local debris = Services.Debris
-    local tween_service = Services.TweenService
-    local sound_service = Services.SoundService
-    local run_service = Services.RunService
+--[[
+
+    Milenium Library
+    -> Made by @finobe 
+    -> Kind of got bored idk what to do with life
+    -> Idk who or why this got leaked, ui was VERY popular and high in demand with customers
+]]
+
+-- Variables 
+    local uis = game:GetService("UserInputService") 
+    local players = game:GetService("Players") 
+    local ws = game:GetService("Workspace")
+    local rs = game:GetService("ReplicatedStorage")
+    local http_service = game:GetService("HttpService")
+    local gui_service = game:GetService("GuiService")
+    local lighting = game:GetService("Lighting")
+    local run = game:GetService("RunService")
+    local stats = game:GetService("Stats")
+    local coregui = game:GetService("CoreGui")
+    local debris = game:GetService("Debris")
+    local tween_service = game:GetService("TweenService")
+    local sound_service = game:GetService("SoundService")
 
     local vec2 = Vector2.new
     local vec3 = Vector3.new
@@ -60,11 +66,23 @@
     local concat = table.concat
 -- 
 
--- Library ini
+-- Library init
+    getgenv().library = {
+        directory = "milenium",
+        folders = {
+            "/fonts",
+            "/configs",
+        },
+        flags = {},
+        config_flags = {},
+        connections = {},   
+        notifications = {notifs = {}},
+        current_open; 
+    }
 
     local themes = {
         preset = {
-            accent = rgb(0, 162, 255),
+            accent = rgb(155, 150, 219),
         }, 
 
         utility = {
@@ -169,13 +187,13 @@
             return getcustomasset(Name .. ".font");
         end
         
-        local Medium = Register_Font("Meawdawdawddium", 200, "Normal", {
-            Id = "Mediumawdwad.ttf",
+        local Medium = Register_Font("Medium", 200, "Normal", {
+            Id = "Medium.ttf",
             Font = game:HttpGet("https://github.com/i77lhm/storage/raw/refs/heads/main/fonts/Inter_28pt-Medium.ttf"),
         })
 
-        local SemiBold = Register_Font("SeawdawdawdawdmiBold", 200, "Normal", {
-            Id = "SemiBoldawdawdwad.ttf",
+        local SemiBold = Register_Font("SemiBold", 200, "Normal", {
+            Id = "SemiBold.ttf",
             Font = game:HttpGet("https://github.com/i77lhm/storage/raw/refs/heads/main/fonts/Inter_28pt-SemiBold.ttf"),
         })
 
@@ -198,7 +216,7 @@
             local Frame = Instance.new("TextButton")
             Frame.Position = dim2(1, -10, 1, -10)
             Frame.BorderColor3 = rgb(0, 0, 0)
-            Frame.Size = dim2(0, 10, 0, 10)
+            Frame.Size = UDim2.new(0.8, 0, 0.3, 0)
             Frame.BorderSizePixel = 0
             Frame.BackgroundColor3 = rgb(255, 255, 255)
             Frame.Parent = frame
@@ -211,7 +229,7 @@
             local og_size = frame.Size  
 
             Frame.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.Touch then
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
                     resizing = true
                     start = input.Position
                     start_size = frame.Size
@@ -219,13 +237,13 @@
             end)
 
             Frame.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.Touch then
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
                     resizing = false
                 end
             end)
 
             library:connection(uis.InputChanged, function(input, game_event) 
-                if resizing and input.UserInputType == Enum.UserInputType.Touch then
+                if resizing and input.UserInputType == Enum.UserInputType.MouseMovement then
                     local viewport_x = camera.ViewportSize.X
                     local viewport_y = camera.ViewportSize.Y
 
@@ -279,7 +297,7 @@
             local start 
 
             frame.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.Touch then
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
                     dragging = true
                     start = input.Position
                     start_size = frame.Position
@@ -287,21 +305,29 @@
             end)
 
             frame.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.Touch then
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
                     dragging = false
                 end
             end)
 
             library:connection(uis.InputChanged, function(input, game_event) 
-                if dragging and input.UserInputType == Enum.UserInputType.Touch then
+                if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
                     local viewport_x = camera.ViewportSize.X
                     local viewport_y = camera.ViewportSize.Y
 
                     local current_position = dim2(
                         0,
-                        start_size.X.Offset + (input.Position.X - start.X),
+                        clamp(
+                            start_size.X.Offset + (input.Position.X - start.X),
+                            0,
+                            viewport_x - frame.Size.X.Offset
+                        ),
                         0,
-                        start_size.Y.Offset + (input.Position.Y - start.Y)
+                        math.clamp(
+                            start_size.Y.Offset + (input.Position.Y - start.Y),
+                            0,
+                            viewport_y - frame.Size.Y.Offset
+                        )
                     )
 
                     library:tween(frame, {Position = current_position}, Enum.EasingStyle.Linear, 0.05)
@@ -487,7 +513,7 @@
                 ZIndexBehavior = Enum.ZIndexBehavior.Global;
                 IgnoreGuiInset = true;
             });
-
+            
             library[ "other" ] = library:create( "ScreenGui" , {
                 Parent = coregui;
                 Name = "\0";
@@ -506,12 +532,7 @@
                     BorderSizePixel = 0;
                     BackgroundColor3 = rgb(14, 14, 16)
                 }); items[ "main" ].Position = dim2(0, items[ "main" ].AbsolutePosition.X, 0, items[ "main" ].AbsolutePosition.Y)
-
-                library:create( "UIScale" , {
-                    Parent = items[ "main" ];
-                    Scale = scale;
-                });
-
+                
                 library:create( "UICorner" , {
                     Parent = items[ "main" ];
                     CornerRadius = dim(0, 10)
@@ -684,19 +705,13 @@
                     BackgroundColor3 = rgb(255, 255, 255)
                 }); 
                 
-                if not LRM_SecondsLeft then
-                    LRM_SecondsLeft = math.huge
-                end
-
-                local time_left = tostring((LRM_SecondsLeft < math.huge and ""..tostring(math.floor(((LRM_SecondsLeft / 60) / 60) / 24)).." days" or LRM_SecondsLeft == math.huge and "lifetime"))
-
                 items[ "other_info" ] = library:create( "TextLabel" , {
                     Parent = items[ "info" ];
                     RichText = true;
                     Name = "\0";
                     TextColor3 = themes.preset.accent;
                     BorderColor3 = rgb(0, 0, 0);
-                    Text = '<font color="rgb(72, 72, 73)">'..time_left..', </font>' .. cfg.name:lower() .. cfg.suffix:lower();
+                    Text = '<font color="rgb(72, 72, 73)">32 days left, </font>' .. cfg.name .. cfg.suffix;
                     Size = dim2(1, 0, 0, 0);
                     Position = dim2(0, -10, 0.5, -1);
                     AnchorPoint = vec2(0, 0.5);
@@ -725,59 +740,8 @@
                 -- library:tween(items[ "tab_holder" ], {Size = dim2(1, -196, 1, -81)}, Enum.EasingStyle.Quad, 0.4)
                 -- cfg.tween = 
                 
-                items[ "main" ].Visible = bool
+                library[ "items" ].Enabled = bool
             end 
-
-            items[ "close button" ] = library:create( "TextButton" , {
-                Parent = library[ "items" ];
-                Name = "\0";
-                Position = dim2(0, 20, 1, -20);
-                AnchorPoint = vec2(0, 1);
-                BorderColor3 = rgb(0, 0, 0);
-                Size = dim2(0, 75, 0, 50);
-                BorderSizePixel = 0;
-                Text = "";
-                AutoButtonColor = false;
-                Visible = true;
-                BackgroundColor3 = rgb(25, 25, 29)
-            });
-            
-            items[ "other_info" ] = library:create( "TextLabel" , {
-                Parent = items[ "close button" ];
-                RichText = true;
-                Name = "\0";
-                TextColor3 = rgb(245, 245, 245);
-                BorderColor3 = rgb(0, 0, 0);
-                Text = "toggle ui";
-                Size = dim2(1, 0, 1, 0);
-                BorderSizePixel = 0;
-                BackgroundTransparency = 1;
-                TextXAlignment = Enum.TextXAlignment.Center;
-                FontFace = fonts.font;
-                ZIndex = 2;
-                TextSize = 14;
-                BackgroundColor3 = rgb(255, 255, 255)
-            });
-
-            library:create( "UICorner" , {
-                Parent = items[ "close button" ];
-                CornerRadius = dim(0, 10)
-            });
-            
-            library:create( "UIStroke" , {
-                Color = rgb(23, 23, 29);
-                Parent = items[ "close button" ];
-                ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-            });
-
-            local open = true 
-            items[ "close button" ].InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.Touch then
-                    open = not open 
-
-                    cfg.toggle_menu(open)
-                end 
-            end)
                 
             return setmetatable(cfg, library)
         end 
@@ -829,7 +793,7 @@
                         BorderColor3 = rgb(0, 0, 0);
                         Parent = items[ "button" ];
                         AnchorPoint = vec2(0, 0.5);
-                        Image = cfg.icon;
+                        Image = "http://www.roblox.com/asset/?id=6034767608";
                         BackgroundTransparency = 1;
                         Position = dim2(0, 10, 0.5, 0);
                         Name = "\0";
@@ -1004,7 +968,7 @@
                                 });
                             --
                         end
-                        
+
                         data.text = multi_items[ "name" ]
                         data.accent = multi_items[ "accent" ]
                         data.button = multi_items[ "button" ]
@@ -1048,8 +1012,7 @@
                             library:close_element()
 						end
 
-						multi_items[ "button" ].InputBegan:Connect(function(Input)
-                            if Input.UserInputType ~= Enum.UserInputType.Touch then return end
+						multi_items[ "button" ].MouseButton1Down:Connect(function()
 							data.open_page() 
 						end)
 
@@ -1102,8 +1065,7 @@
                 library:close_element()
             end
 
-            items[ "button" ].InputBegan:Connect(function(Input)
-                            if Input.UserInputType ~= Enum.UserInputType.Touch then return end
+            items[ "button" ].MouseButton1Down:Connect(function()
                 cfg.open_tab()
             end)
             
@@ -1435,11 +1397,9 @@
             end;
 
             if cfg.fading_toggle then
-                items[ "button" ].InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.Touch then
-                        cfg.default = not cfg.default 
-                        cfg.toggle_section(cfg.default) 
-                    end 
+                items[ "button" ].MouseButton1Click:Connect(function()
+                    cfg.default = not cfg.default 
+                    cfg.toggle_section(cfg.default) 
                 end)
 
                 function cfg.toggle_section(bool)
@@ -1456,7 +1416,7 @@
         function library:toggle(options) 
             local rand = math.random(1, 2) 
             local cfg = {
-                enabled = options.default or false,
+                enabled = options.enabled or nil,
                 name = options.name or "Toggle",
                 info = options.info or nil,
                 flag = options.flag or library:next_flag(),
@@ -1679,7 +1639,6 @@
                     library:tween(items[ "circle" ], {BackgroundColor3 = bool and rgb(255, 255, 255) or rgb(86, 86, 88), Position = bool and dim2(1, -14, 0, 2) or dim2(0, 2, 0, 2)}, Enum.EasingStyle.Quad)
                 end
 
-                cfg.enabled = bool
                 cfg.callback(bool)
 
                 if cfg.folding then 
@@ -1689,14 +1648,12 @@
                 flags[cfg.flag] = bool
             end 
             
-            items[ "toggle" ].InputBegan:Connect(function(Input)
-                if Input.UserInputType ~= Enum.UserInputType.Touch then return end
+            items[ "toggle" ].MouseButton1Click:Connect(function()
                 cfg.enabled = not cfg.enabled 
                 cfg.set(cfg.enabled)
             end)
 
-            items[ "toggle_button" ].InputBegan:Connect(function(Input)
-                if Input.UserInputType ~= Enum.UserInputType.Touch then return end
+            items[ "toggle_button" ].MouseButton1Click:Connect(function()
                 cfg.enabled = not cfg.enabled 
                 cfg.set(cfg.enabled)
             end)
@@ -1734,7 +1691,7 @@
                 intervals = options.interval or options.decimal or 1,
                 default = options.default or 10,
                 value = options.default or 10, 
-                seperator = options.seperator or options.Seperator or false;
+                seperator = options.seperator or options.Seperator or true;
 
                 dragging = false,
                 items = {}
@@ -1898,10 +1855,6 @@
                 });                
             end 
 
-            function cfg.changetext(text)
-                items['name'].Text = text
-            end 
-
             function cfg.set(value)
                 cfg.value = clamp(library:round(value, cfg.intervals), cfg.min, cfg.max)
 
@@ -1912,14 +1865,13 @@
                 cfg.callback(flags[cfg.flag])
             end
 
-            items[ "slider" ].InputBegan:Connect(function(Input)
-                            if Input.UserInputType ~= Enum.UserInputType.Touch then return end
+            items[ "slider" ].MouseButton1Down:Connect(function()
                 cfg.dragging = true 
                 library:tween(items[ "value" ], {TextColor3 = rgb(255, 255, 255)}, Enum.EasingStyle.Quad, 0.2)
             end)
 
             library:connection(uis.InputChanged, function(input)
-                if cfg.dragging and input.UserInputType == Enum.UserInputType.Touch then 
+                if cfg.dragging and input.UserInputType == Enum.UserInputType.MouseMovement then 
                     local size_x = (input.Position.X - items[ "slider" ].AbsolutePosition.X) / items[ "slider" ].AbsoluteSize.X
                     local value = ((cfg.max - cfg.min) * size_x) + cfg.min
                     cfg.set(value)
@@ -1927,7 +1879,7 @@
             end)
 
             library:connection(uis.InputEnded, function(input)
-                if input.UserInputType == Enum.UserInputType.Touch then
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
                     cfg.dragging = false
                     library:tween(items[ "value" ], {TextColor3 = rgb(72, 72, 73)}, Enum.EasingStyle.Quad, 0.2) 
                 end 
@@ -2228,8 +2180,7 @@
                     cfg.y_size += button.AbsoluteSize.Y + 6 -- super annoying manual sizing but oh well
                     insert(cfg.option_instances, button)
                     
-                    button.InputBegan:Connect(function(Input)
-                            if Input.UserInputType ~= Enum.UserInputType.Touch then return end
+                    button.MouseButton1Down:Connect(function()
                         if cfg.multi then 
                             local selected_index = find(cfg.multi_items, button.Text)
                             
@@ -2250,11 +2201,10 @@
                 end
             end
 
-            items[ "dropdown" ].InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.Touch then
-                    cfg.open = not cfg.open  
-                    cfg.set_visible(cfg.open)
-                end 
+            items[ "dropdown" ].MouseButton1Click:Connect(function()
+                cfg.open = not cfg.open 
+                
+                cfg.set_visible(cfg.open)
             end)
 
             if cfg.seperator then 
@@ -2442,11 +2392,6 @@
                         BorderSizePixel = 0;
                         BackgroundColor3 = rgb(54, 31, 184)
                     });
-
-                                    library:create( "UIScale" , {
-                    Parent = items[ "colorpicker_inline" ];
-                    Scale = scale;
-                });
                     
                     library:create( "UICorner" , {
                         Parent = items[ "colorpicker_inline" ];
@@ -2810,40 +2755,35 @@
                 cfg.set()
             end
 
-            items[ "colorpicker" ].InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.Touch then
-                    cfg.open = not cfg.open 
+            items[ "colorpicker" ].MouseButton1Click:Connect(function()
+                cfg.open = not cfg.open 
 
-                    cfg.set_visible(cfg.open)   
-                end          
+                cfg.set_visible(cfg.open)            
             end)
 
             uis.InputChanged:Connect(function(input)
-                if (dragging_sat or dragging_hue or dragging_alpha) and input.UserInputType == Enum.UserInputType.Touch then
+                if (dragging_sat or dragging_hue or dragging_alpha) and input.UserInputType == Enum.UserInputType.MouseMovement then
                     cfg.update_color() 
                 end
             end)
 
             library:connection(uis.InputEnded, function(input)
-                if input.UserInputType == Enum.UserInputType.Touch then
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
                     dragging_sat = false
                     dragging_hue = false
                     dragging_alpha = false
                 end
             end)    
 
-            items[ "alpha_gradient" ].InputBegan:Connect(function(Input)
-                            if Input.UserInputType ~= Enum.UserInputType.Touch then return end
+            items[ "alpha_gradient" ].MouseButton1Down:Connect(function()
                 dragging_alpha = true 
             end)
             
-            items[ "hue_gradient" ].InputBegan:Connect(function(Input)
-                            if Input.UserInputType ~= Enum.UserInputType.Touch then return end
+            items[ "hue_gradient" ].MouseButton1Down:Connect(function()
                 dragging_hue = true 
             end)
             
-            items[ "sat" ].InputBegan:Connect(function(Input)
-                            if Input.UserInputType ~= Enum.UserInputType.Touch then return end
+            items[ "sat" ].MouseButton1Down:Connect(function()
                 dragging_sat = true  
             end)
 
@@ -3198,12 +3138,12 @@
                             PaddingLeft = dim(0, 5)
                         });
 
-                        name.InputBegan:Connect(function(input)
-                            if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.Touch then
-                                cfg.set(option)
-                                cfg.set_visible(false)
-                                cfg.open = false
-                            end 
+                        name.MouseButton1Click:Connect(function()
+                            cfg.set(option)
+
+                            cfg.set_visible(false)
+
+                            cfg.open = false
                         end)
                     end
                 -- 
@@ -3283,8 +3223,7 @@
                 items[ "dropdown" ].Position = dim_offset(items[ "keybind_holder" ].AbsolutePosition.X, items[ "keybind_holder" ].AbsolutePosition.Y + items[ "keybind_holder" ].AbsoluteSize.Y + 60)
             end
         
-            items[ "keybind_holder" ].InputBegan:Connect(function(Input)
-                            if Input.UserInputType ~= Enum.UserInputType.Touch then return end
+            items[ "keybind_holder" ].MouseButton1Down:Connect(function()
                 task.wait()
                 items[ "key" ].Text = "..."	
 
@@ -3393,13 +3332,11 @@
                 }); library:apply_theme(items[ "name" ], "accent", "BackgroundColor3");                            
             end 
 
-            items[ "button" ].InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.Touch then
-                    cfg.callback()
+            items[ "button" ].MouseButton1Click:Connect(function()
+                cfg.callback()
 
-                    items[ "name" ].TextColor3 = themes.preset.accent 
-                    library:tween(items[ "name" ], {TextColor3 = rgb(245, 245, 245)})
-                end
+                items[ "name" ].TextColor3 = themes.preset.accent 
+                library:tween(items[ "name" ], {TextColor3 = rgb(245, 245, 245)})
             end)
             
             return setmetatable(cfg, library)
@@ -3425,11 +3362,6 @@
                     BackgroundColor3 = rgb(25, 25, 29)
                 });
                 
-                library:create( "UIScale" , {
-                    Parent = items[ "outline" ];
-                    Scale = scale;
-                });
-
                 items[ "inline" ] = library:create( "Frame" , {
                     Parent = items[ "outline" ];
                     Name = "\0";
@@ -3496,11 +3428,10 @@
                 library:close_element(cfg)
             end
             
-            items[ "tick" ].InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.Touch then
-                    cfg.open = not cfg.open
-                    cfg.set_visible(cfg.open)
-                end 
+            items[ "tick" ].MouseButton1Click:Connect(function()
+                cfg.open = not cfg.open
+
+                cfg.set_visible(cfg.open)
             end)
 
             return setmetatable(cfg, library)
@@ -3524,7 +3455,7 @@
                     Size = dim2(1, 0, 0, 0);
                     BorderColor3 = rgb(0, 0, 0);
                     BorderSizePixel = 0;
-                    AutomaticSize = Enum.AutomaticSize.Y;
+                    AutomaticSize = Enum.AutomaticSize.XY;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
@@ -3541,12 +3472,12 @@
                 });
             end 
 
-            function cfg.refresh_options(options_to_refresh)
+            function cfg.refresh_options(options_to_refresh) -- ignore goofy parameter
                 for _,option in cfg.data_store do 
                     option:Destroy()
                 end
 
-                for _, option_data in options_to_refresh do
+                for _, option_data in options_to_refresh do -- haha u skids no next >_<
                     local button = library:create( "TextButton" , {
                         FontFace = fonts.small;
                         TextColor3 = rgb(0, 0, 0);
@@ -3571,9 +3502,9 @@
                         Parent = button;
                         Name = "\0";
                         BackgroundTransparency = 1;
-                        TextTruncate = Enum.TextTruncate.AtEnd;
                         Size = dim2(1, 0, 1, 0);
                         BorderSizePixel = 0;
+                        AutomaticSize = Enum.AutomaticSize.XY;
                         TextSize = 14;
                         BackgroundColor3 = rgb(255, 255, 255)
                     });
@@ -3583,19 +3514,16 @@
                         CornerRadius = dim(0, 3)
                     });     
 
-                    button.InputBegan:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.Touch then
-                            local current = cfg.current_element 
+                    button.MouseButton1Click:Connect(function()
+                        local current = cfg.current_element 
+                        if current and current ~= name then 
+                            library:tween(current, {TextColor3 = rgb(72, 72, 72)})
+                        end
 
-                            if current and current ~= name then 
-                                library:tween(current, {TextColor3 = rgb(72, 72, 72)})
-                            end
-                            
-                            flags[cfg.flag] = option_data
-                            cfg.callback(option_data)
-                            library:tween(name, {TextColor3 = rgb(245, 245, 245)})
-                            cfg.current_element = name
-                        end 
+                        flags[cfg.flag] = option_data
+                        cfg.callback(option_data)
+                        library:tween(name, {TextColor3 = rgb(245, 245, 245)})
+                        cfg.current_element = name
                     end)
 
                     name.MouseEnter:Connect(function()
@@ -3622,24 +3550,19 @@
         end 
 
         function library:init_config(window) 
-            local text;
             window:seperator({name = "Settings"})
             local main = window:tab({name = "Configs", tabs = {"Main"}})
             
             local column = main:column({})
             local section = column:section({name = "Configs", size = 1, default = true, icon = "rbxassetid://139628202576511"})
-            config_holder = section:list({options = {"Report", "This", "Error", "To", "Finobe"}, callback = function(option)
-                if text then 
-                    text.set(option)
-                end 
-            end, flag = "config_name_list"}); library:update_config_list()
+            config_holder = section:list({options = {"Report", "This", "Error", "To", "Finobe"}, callback = function(option) end, flag = "config_name_list"}); library:update_config_list()
             
             local column = main:column({})
             local section = column:section({name = "Settings", side = "right", size = 1, default = true, icon = "rbxassetid://129380150574313"})
-            text = section:textbox({name = "Config name:", flag = "config_name_text"})
-            section:button({name = "Save", callback = function() writefile(library.directory .. "/configs/" .. flags["config_name_text"] .. ".cfg", library:get_config()) library:update_config_list() notifications:create_notification({name = "Configs", info = "Saved config to:\n" .. flags["config_name_text"] or flags["config_name_text"]}) end}) 
-            section:button({name = "Load", callback = function() library:load_config(readfile(library.directory .. "/configs/" .. flags["config_name_text"] .. ".cfg"))  library:update_config_list() notifications:create_notification({name = "Configs", info = "Loaded config:\n" .. flags["config_name_text"]}) end})
-            section:button({name = "Delete", callback = function() delfile(library.directory .. "/configs/" .. flags["config_name_text"] .. ".cfg")  library:update_config_list() notifications:create_notification({name = "Configs", info = "Deleted config:\n" .. flags["config_name_text"]}) end})
+            section:textbox({name = "Config name:", flag = "config_name_text"})
+            section:button({name = "Save", callback = function() writefile(library.directory .. "/configs/" .. flags["config_name_text"] or flags["config_name_list"] .. ".cfg", library:get_config()) library:update_config_list() notifications:create_notification({name = "Configs", info = "Saved config to:\n" .. flags["config_name_list"] or flags["config_name_text"]}) end}) 
+            section:button({name = "Load", callback = function() library:load_config(readfile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg"))  library:update_config_list() notifications:create_notification({name = "Configs", info = "Loaded config:\n" .. flags["config_name_list"]}) end})
+            section:button({name = "Delete", callback = function() delfile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg")  library:update_config_list() notifications:create_notification({name = "Configs", info = "Deleted config:\n" .. flags["config_name_list"]}) end})
             section:colorpicker({name = "Menu Accent", callback = function(color, alpha) library:update_theme("accent", color) end, color = themes.preset.accent})
             section:keybind({name = "Menu Bind", callback = function(bool) window.toggle_menu(bool) end, default = true})
         end
@@ -3700,11 +3623,6 @@
                     AnchorPoint = vec2(1, 0);
                     AutomaticSize = Enum.AutomaticSize.Y;
                     BackgroundColor3 = rgb(14, 14, 16)
-                });
-
-                library:create( "UIScale" , {
-                    Parent = items[ "notification" ];
-                    Scale = scale;
                 });
                 
                 library:create( "UIStroke" , {
@@ -3806,4 +3724,7 @@
                 items[ "notification" ]:Destroy() 
             end)
         end
-    --end)()
+    --
+-- 
+
+return library
