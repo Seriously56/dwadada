@@ -89,36 +89,46 @@ section:slider({
 ```
 **Dropdown**
 ```lua
--- Single selection
-local dropdown = section:dropdown({
-    name = "Dropdown",
-    flag = "dropdown_flag",
-    options = {"Option 1", "Option 2", "Option 3"},
-    default = "Option 1",
-    width = 130,              -- Dropdown width
-    multi = false,            -- Single selection
-    scrolling = false,        -- Enable scrolling
-    info = "Choose an option",
-    seperator = true,
+section:dropdown({
+    name = "Dropdown Name",
+    flag = "unique_flag",
+    items = {"Option 1", "Option 2", "Option 3"},
+    default = "Option 1",  -- Optional
+    multi = false,         -- Single selection
     callback = function(selected)
         print("Selected:", selected)
     end
 })
 
--- Multi-selection
-local multi_dropdown = section:dropdown({
+section:dropdown({
     name = "Multi Select",
-    flag = "multi_flag",
-    options = {"Item 1", "Item 2", "Item 3"},
-    multi = true,
-    default = {"Item 1"},
+    flag = "multi_flag", 
+    items = {"Item 1", "Item 2", "Item 3", "Item 4"},
+    default = {"Item 1", "Item 3"},  -- Table for multi-select
+    multi = true,  -- Enable multi-selection
     callback = function(selected)
-        print("Selected:", table.concat(selected, ", "))
+        -- selected is a table of selected items
+        print("Selected items:", table.concat(selected, ", "))
     end
 })
 
--- Update options dynamically
-dropdown:refresh_options({"New", "Options", "List"})
+Required Parameters:
+name (string) - Display name of the dropdown
+
+flag (string) - Unique identifier for the dropdown
+
+items (table) - Array of options: {"Option1", "Option2", "Option3"}
+
+callback (function) - Called when selection changes
+
+Optional Parameters:
+default (string/table) - Default selection. String for single, table for multi
+
+multi (boolean) - Enable multi-selection (default: false)
+
+seperator (boolean) - Add separator line below (default: false)
+
+myDropdown:refresh_options({"Player3", "Player4", "Player5"})
 ```
 **Color Picker**
 ```lua
