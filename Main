@@ -20,6 +20,11 @@
     local debris = game:GetService("Debris")
     local tween_service = game:GetService("TweenService")
     local sound_service = game:GetService("SoundService")
+ 
+
+-- ADD THIS SECTION FOR MOBILE SUPPORT
+local isMobile = (uis:GetPlatform() == Enum.Platform.Android or uis:GetPlatform() == Enum.Platform.IOS)
+local touchStartPositions = {}
 
     local vec2 = Vector2.new
     local vec3 = Vector3.new
@@ -292,49 +297,84 @@
         end
 
         function library:draggify(frame)
-            local dragging = false 
-            local start_size = frame.Position
-            local start 
+    local dragging = false 
+    local start_size = frame.Position
+    local start 
 
-            frame.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    dragging = true
-                    start = input.Position
-                    start_size = frame.Position
-                end
-            end)
+    if isMobile then
+        -- Mobile touch support
+        local Dragging, DraggingInput, DraggingStart, StartPosition
+        
+        frame.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.Touch then
+                Dragging = true
+                DraggingInput = input
+                DraggingStart = input.Position
+                StartPosition = frame.Position
+                touchStartPositions[frame] = input.Position
+            end
+        end)
+        
+        uis.TouchMoved:Connect(function(input)
+            if Dragging and input == DraggingInput then
+                local OffsetPos = input.Position - DraggingStart
+                frame.Position = UDim2.new(
+                    StartPosition.X.Scale,
+                    StartPosition.X.Offset + OffsetPos.X,
+                    StartPosition.Y.Scale,
+                    StartPosition.Y.Offset + OffsetPos.Y
+                )
+            end
+        end)
+        
+        uis.TouchEnded:Connect(function(input)
+            if input == DraggingInput then
+                Dragging = false
+                touchStartPositions[frame] = nil
+            end
+        end)
+    else
+        -- Original mouse code
+        frame.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = true
+                start = input.Position
+                start_size = frame.Position
+            end
+        end)
 
-            frame.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    dragging = false
-                end
-            end)
+        frame.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = false
+            end
+        end)
 
-            library:connection(uis.InputChanged, function(input, game_event) 
-                if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                    local viewport_x = camera.ViewportSize.X
-                    local viewport_y = camera.ViewportSize.Y
+        library:connection(uis.InputChanged, function(input, game_event) 
+            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                local viewport_x = camera.ViewportSize.X
+                local viewport_y = camera.ViewportSize.Y
 
-                    local current_position = dim2(
+                local current_position = dim2(
+                    0,
+                    clamp(
+                        start_size.X.Offset + (input.Position.X - start.X),
                         0,
-                        clamp(
-                            start_size.X.Offset + (input.Position.X - start.X),
-                            0,
-                            viewport_x - frame.Size.X.Offset
-                        ),
+                        viewport_x - frame.Size.X.Offset
+                    ),
+                    0,
+                    math.clamp(
+                        start_size.Y.Offset + (input.Position.Y - start.Y),
                         0,
-                        math.clamp(
-                            start_size.Y.Offset + (input.Position.Y - start.Y),
-                            0,
-                            viewport_y - frame.Size.Y.Offset
-                        )
+                        viewport_y - frame.Size.Y.Offset
                     )
+                )
 
-                    library:tween(frame, {Position = current_position}, Enum.EasingStyle.Linear, 0.05)
-                    library:close_element()
-                end
-            end)
-        end 
+                library:tween(frame, {Position = current_position}, Enum.EasingStyle.Linear, 0.05)
+                library:close_element()
+            end
+        end)
+    end
+end
 
         function library:convert(str)
             local values = {}
@@ -1648,15 +1688,21 @@
                 flags[cfg.flag] = bool
             end 
             
-            items[ "toggle" ].MouseButton1Click:Connect(function()
-                cfg.enabled = not cfg.enabled 
-                cfg.set(cfg.enabled)
-            end)
+            items[ "toggle" ].InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            cfg.enabled = not cfg.enabled 
+            cfg.set(cfg.enabled)
+        end
+    end)
 
-            items[ "toggle_button" ].MouseButton1Click:Connect(function()
-                cfg.enabled = not cfg.enabled 
-                cfg.set(cfg.enabled)
-            end)
+    items[ "toggle_button" ].InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            cfg.enabled = not cfg.enabled 
+            cfg.set(cfg.enabled)
+        end
+    end)
             
             if cfg.seperator then -- ok bro my lua either sucks or this was a pain in the ass to make (simple if statement aswell 💔)
                 library:create( "Frame" , {
@@ -1865,25 +1911,30 @@
                 cfg.callback(flags[cfg.flag])
             end
 
-            items[ "slider" ].MouseButton1Down:Connect(function()
-                cfg.dragging = true 
-                library:tween(items[ "value" ], {TextColor3 = rgb(255, 255, 255)}, Enum.EasingStyle.Quad, 0.2)
-            end)
+             items[ "slider" ].InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            cfg.dragging = true 
+            library:tween(items[ "value" ], {TextColor3 = rgb(255, 255, 255)}, Enum.EasingStyle.Quad, 0.2)
+        end
+    end)
 
-            library:connection(uis.InputChanged, function(input)
-                if cfg.dragging and input.UserInputType == Enum.UserInputType.MouseMovement then 
-                    local size_x = (input.Position.X - items[ "slider" ].AbsolutePosition.X) / items[ "slider" ].AbsoluteSize.X
-                    local value = ((cfg.max - cfg.min) * size_x) + cfg.min
-                    cfg.set(value)
-                end
-            end)
+    library:connection(uis.InputChanged, function(input)
+        if cfg.dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or 
+                             input.UserInputType == Enum.UserInputType.Touch) then 
+            local size_x = (input.Position.X - items[ "slider" ].AbsolutePosition.X) / items[ "slider" ].AbsoluteSize.X
+            local value = ((cfg.max - cfg.min) * size_x) + cfg.min
+            cfg.set(value)
+        end
+    end)
 
-            library:connection(uis.InputEnded, function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    cfg.dragging = false
-                    library:tween(items[ "value" ], {TextColor3 = rgb(72, 72, 73)}, Enum.EasingStyle.Quad, 0.2) 
-                end 
-            end)
+    library:connection(uis.InputEnded, function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            cfg.dragging = false
+            library:tween(items[ "value" ], {TextColor3 = rgb(72, 72, 73)}, Enum.EasingStyle.Quad, 0.2) 
+        end 
+    end)
 
             if cfg.seperator then 
                 library:create( "Frame" , {
@@ -2201,11 +2252,13 @@
                 end
             end
 
-            items[ "dropdown" ].MouseButton1Click:Connect(function()
-                cfg.open = not cfg.open 
-                
-                cfg.set_visible(cfg.open)
-            end)
+            items[ "dropdown" ].InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            cfg.open = not cfg.open 
+            cfg.set_visible(cfg.open)
+        end
+    end)
 
             if cfg.seperator then 
                 library:create( "Frame" , {
@@ -2755,37 +2808,36 @@
                 cfg.set()
             end
 
-            items[ "colorpicker" ].MouseButton1Click:Connect(function()
-                cfg.open = not cfg.open 
+                -- REPLACE THE EXISTING INPUT HANDLING IN COLORPICKER FUNCTION:
+    items[ "colorpicker" ].InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            cfg.open = not cfg.open 
+            cfg.set_visible(cfg.open)            
+        end
+    end)
 
-                cfg.set_visible(cfg.open)            
-            end)
-
-            uis.InputChanged:Connect(function(input)
-                if (dragging_sat or dragging_hue or dragging_alpha) and input.UserInputType == Enum.UserInputType.MouseMovement then
-                    cfg.update_color() 
-                end
-            end)
-
-            library:connection(uis.InputEnded, function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    dragging_sat = false
-                    dragging_hue = false
-                    dragging_alpha = false
-                end
-            end)    
-
-            items[ "alpha_gradient" ].MouseButton1Down:Connect(function()
-                dragging_alpha = true 
-            end)
-            
-            items[ "hue_gradient" ].MouseButton1Down:Connect(function()
-                dragging_hue = true 
-            end)
-            
-            items[ "sat" ].MouseButton1Down:Connect(function()
-                dragging_sat = true  
-            end)
+    -- Update the saturation/hue/alpha pickers:
+    items[ "alpha_gradient" ].InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            dragging_alpha = true 
+        end
+    end)
+    
+    items[ "hue_gradient" ].InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            dragging_hue = true 
+        end
+    end)
+    
+    items[ "sat" ].InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            dragging_sat = true  
+        end
+    end)
 
             items[ "input" ].FocusLost:Connect(function()
                 local text = items[ "input" ].Text
@@ -3223,23 +3275,34 @@
                 items[ "dropdown" ].Position = dim_offset(items[ "keybind_holder" ].AbsolutePosition.X, items[ "keybind_holder" ].AbsolutePosition.Y + items[ "keybind_holder" ].AbsoluteSize.Y + 60)
             end
         
-            items[ "keybind_holder" ].MouseButton1Down:Connect(function()
-                task.wait()
-                items[ "key" ].Text = "..."	
+           items[ "keybind_holder" ].InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            task.wait()
+            items[ "key" ].Text = "..."	
 
-                cfg.binding = library:connection(uis.InputBegan, function(keycode, game_event)  
+            cfg.binding = library:connection(uis.InputBegan, function(keycode, game_event)  
+                -- For mobile, we'll handle touch differently
+                if isMobile and keycode.UserInputType == Enum.UserInputType.Touch then
+                    -- You might want to show a virtual keyboard or handle mobile keybinds differently
+                    cfg.set("MB1") -- Default to left mouse button for mobile
+                else
                     cfg.set(keycode.KeyCode ~= Enum.KeyCode.Unknown and keycode.KeyCode or keycode.UserInputType)
-                    
-                    cfg.binding:Disconnect() 
-                    cfg.binding = nil
-                end)
+                end
+                
+                cfg.binding:Disconnect() 
+                cfg.binding = nil
             end)
+        end
+    end)
 
-            items[ "keybind_holder" ].MouseButton2Down:Connect(function()
-                cfg.open = not cfg.open 
-
-                cfg.set_visible(cfg.open)
-            end)
+    items[ "keybind_holder" ].InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton2 or 
+           (isMobile and input.UserInputType == Enum.UserInputType.Touch and input.Position.X > items[ "keybind_holder" ].AbsolutePosition.X + items[ "keybind_holder" ].AbsoluteSize.X / 2) then
+            cfg.open = not cfg.open 
+            cfg.set_visible(cfg.open)
+        end
+    end)
 
             library:connection(uis.InputBegan, function(input, game_event) 
                 if not game_event then
@@ -3332,15 +3395,16 @@
                 }); library:apply_theme(items[ "name" ], "accent", "BackgroundColor3");                            
             end 
 
-            items[ "button" ].MouseButton1Click:Connect(function()
-                cfg.callback()
+               
+    items[ "button" ].InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            cfg.callback()
 
-                items[ "name" ].TextColor3 = themes.preset.accent 
-                library:tween(items[ "name" ], {TextColor3 = rgb(245, 245, 245)})
-            end)
-            
-            return setmetatable(cfg, library)
-        end 
+            items[ "name" ].TextColor3 = themes.preset.accent 
+            library:tween(items[ "name" ], {TextColor3 = rgb(245, 245, 245)})
+        end
+    end)
 
         function library:settings(options)  
             local cfg = {
@@ -3724,6 +3788,26 @@
                 items[ "notification" ]:Destroy() 
             end)
         end
+-- Add this function to handle mobile UI scaling
+function library:setup_mobile_ui()
+    if isMobile then
+        -- Adjust main window size for mobile
+        if library.items and library.items.main then
+            local viewportSize = camera.ViewportSize
+            library.items.main.Size = UDim2.new(0, viewportSize.X * 0.9, 0, viewportSize.Y * 0.8)
+            library.items.main.Position = UDim2.new(0.5, -library.items.main.Size.X.Offset/2, 0.5, -library.items.main.Size.Y.Offset/2)
+        end
+        
+        -- Increase touch target sizes
+        for _, element in pairs(library.items or {}) do
+            if element:IsA("TextButton") or element:IsA("ImageButton") then
+                if element.AbsoluteSize.Y < 30 then
+                    element.Size = UDim2.new(element.Size.X.Scale, element.Size.X.Offset, 0, 30)
+                end
+            end
+        end
+    end
+end
     --
 -- 
 
