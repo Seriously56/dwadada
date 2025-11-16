@@ -531,8 +531,8 @@
             BackgroundColor3 = rgb(14, 14, 16)
         }); items[ "main" ].Position = dim2(0, items[ "main" ].AbsolutePosition.X, 0, items[ "main" ].AbsolutePosition.Y)
         
-        -- ADD MOBILE SCALING HERE
-        local scale = 0.7  -- Adjust this for mobile sizing (0.5-0.8)
+        -- Mobile scaling
+        local scale = 0.7
         library:create( "UIScale" , {
             Parent = items[ "main" ];
             Scale = scale;
@@ -735,11 +735,12 @@
         library:resizify(items[ "main" ])
     end 
 
+    -- FIXED: Simple toggle function
     function cfg.toggle_menu(bool) 
-        library[ "items" ].Enabled = bool
-    end 
+        items[ "main" ].Visible = bool
+    end
 
-    -- ADD MOBILE MINIMIZE BUTTON HERE
+    -- Mobile minimize button
     items[ "close button" ] = library:create( "TextButton" , {
         Parent = library[ "items" ];
         Name = "\0";
@@ -760,7 +761,7 @@
         Name = "\0";
         TextColor3 = rgb(245, 245, 245);
         BorderColor3 = rgb(0, 0, 0);
-        Text = "toggle ui";
+        Text = "≡ Menu";
         Size = dim2(1, 0, 1, 0);
         BorderSizePixel = 0;
         BackgroundTransparency = 1;
@@ -782,11 +783,12 @@
         ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     });
 
-    local open = true 
+    local menuVisible = true
     items[ "close button" ].InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-            open = not open 
-            cfg.toggle_menu(open)
+            menuVisible = not menuVisible
+            items[ "main" ].Visible = menuVisible
+            items[ "button_label" ].Text = menuVisible and "≡ Menu" or "≡ Show"
         end 
     end)
         
