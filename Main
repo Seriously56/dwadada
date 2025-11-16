@@ -14,6 +14,48 @@ local debris = game:GetService("Debris")
 local tween_service = game:GetService("TweenService")
 local sound_service = game:GetService("SoundService")
 
+local isMobile = (uis:GetPlatform() == Enum.Platform.Android or uis:GetPlatform() == Enum.Platform.IOS)
+local touchStartPositions = {}
+local vec2 = Vector2.new
+local vec3 = Vector3.new
+local dim2 = UDim2.new
+local dim = UDim.new
+local rect = Rect.new
+local cfr = CFrame.new
+local empty_cfr = cfr()
+local point_object_space = empty_cfr.PointToObjectSpace
+local angle = CFrame.Angles
+local dim_offset = UDim2.fromOffset
+local color = Color3.new
+local rgb = Color3.fromRGB
+local hex = Color3.fromHex
+local hsv = Color3.fromHSV
+local rgbseq = ColorSequence.new
+local rgbkey = ColorSequenceKeypoint.new
+local numseq = NumberSequence.new
+local numkey = NumberSequenceKeypoint.new
+local camera = ws.CurrentCamera
+local lp = players.LocalPlayer
+local mouse = lp:GetMouse()
+local gui_offset = gui_service:GetGuiInset().Y
+local max = math.max
+local floor = math.floor
+local min = math.min
+local abs = math.abs
+local noise = math.noise
+local rad = math.rad
+local random = math.random
+local pow = math.pow
+local sin = math.sin
+local pi = math.pi
+local tan = math.tan
+local atan2 = math.atan2
+local clamp = math.clamp
+local insert = table.insert
+local find = table.find
+local remove = table.remove
+local concat = table.concat
+
 -- ADD THIS SECTION FOR MOBILE SUPPORT
 local isMobile = (uis:GetPlatform() == Enum.Platform.Android or uis:GetPlatform() == Enum.Platform.IOS)
 local touchStartPositions = {}
