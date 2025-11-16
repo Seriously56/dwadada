@@ -46,8 +46,11 @@
     local gui_offset = gui_service:GetGuiInset().Y
     local is_mobile = uis.TouchEnabled and not uis.KeyboardEnabled
     local screen_size = camera.ViewportSize
-    local default_size = dim2(0, 700, 0, 565)
-    local mobile_size = dim2(0, math.max(300, screen_size.X * 0.85), 0, math.max(400, screen_size.Y * 0.75))
+    local default_size = dim2(0, 700, 0, 565)  -- Desktop: fixed offset
+    local mobile_size = dim2(0.85, 0, 0.75, 0)  -- Mobile: 85% width, 75% height (scale, no offset)
+    if is_mobile and screen_size.X < 320 then
+    mobile_size = dim2(0, 280, 0, 380)  -- Fallback to offset for tiny screens
+    end
 
     local max = math.max 
     local floor = math.floor 
@@ -294,61 +297,71 @@
             return (y_cond and x_cond)
         end
 
-        function library:draggify(frame)
-            local dragging = false 
-            local start_size = frame.Position
-            local start 
-
-            frame.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    dragging = true
-                    start = input.Position
-                    start_size = frame.Position
-                end
-            end)
-
-            frame.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    dragging = false
-                end
-            end)
-
-            library:connection(uis.InputChanged, function(input, game_event) 
-                if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                    local viewport_x = camera.ViewportSize.X
-                    local viewport_y = camera.ViewportSize.Y
-
-                    local current_position = dim2(
-                        0,
-                        clamp(
-                            start_size.X.Offset + (input.Position.X - start.X),
-                            0,
-                            viewport_x - frame.Size.X.Offset
-                        ),
-                        0,
-                        math.clamp(
-                            start_size.Y.Offset + (input.Position.Y - start.Y),
-                            0,
-                            viewport_y - frame.Size.Y.Offset
-                        )
-                    )
-
-                    library:tween(frame, {Position = current_position}, Enum.EasingStyle.Linear, 0.05)
-                    library:close_element()
-                end
-            end)
-        end 
-
-        -- Touchify for mobile hitboxes (new)
-function library:touchify(obj, padding)
-    if not is_mobile then return end  -- Skip on desktop
-    padding = padding or 10
-    local old_size = obj.Size
-    local old_pos = obj.Position
-    -- Enlarge size and adjust position to keep visual centered
-    obj.Size = UDim2.new(old_size.X.Scale, old_size.X.Offset + padding * 2, old_size.Y.Scale, old_size.Y.Offset + padding * 2)
-    obj.Position = UDim2.new(old_pos.X.Scale, old_pos.X.Offset - padding, old_pos.Y.Scale, old_pos.Y.Offset - padding)
-    obj.ZIndex = obj.ZIndex + 1  -- Ensures it's tappable over overlaps
+      function library:draggify(frame)
+    local dragging = false
+    local start_pos = frame.Position
+    local start_input
+    local drag_threshold = 10 -- Min pixels to move before dragging (filters taps)
+    local touch_id = nil -- Track specific touch for mobile
+    
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            start_input = input.Position
+            start_pos = frame.Position
+            dragging = false -- Start as "potential drag"
+            if input.UserInputType == Enum.UserInputType.Touch then
+                touch_id = input -- Store touch object for ID
+            end
+        end
+    end)
+    
+    frame.InputEnded:Connect(function(input)
+        if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and dragging then
+            dragging = false
+            touch_id = nil
+        end
+    end)
+    
+    library:connection(uis.InputChanged, function(input, game_event)
+        if not dragging and start_input then
+            local delta = (input.Position - start_input).Magnitude
+            if delta >= drag_threshold then
+                dragging = true -- Now commit to drag
+            end
+        end
+        
+        if dragging and
+           ((input.UserInputType == Enum.UserInputType.MouseMovement) or
+            (input.UserInputType == Enum.UserInputType.Touch and (not touch_id or input == touch_id))) then
+            local viewport_x = camera.ViewportSize.X
+            local viewport_y = camera.ViewportSize.Y
+            local current_position = dim2(
+                0,
+                math.clamp(  -- Use math.clamp directly (fallback if no alias)
+                    start_pos.X.Offset + (input.Position.X - start_input.X),
+                    0,
+                    viewport_x - frame.Size.X.Offset
+                ),
+                0,
+                math.clamp(  -- Use math.clamp directly (fallback if no alias)
+                    start_pos.Y.Offset + (input.Position.Y - start_input.Y),
+                    0,
+                    viewport_y - frame.Size.Y.Offset
+                )
+            )
+            library:tween(frame, {Position = current_position}, Enum.EasingStyle.Linear, 0.05)
+            library:close_element()
+        end
+    end)
+    
+    library:connection(uis.InputEnded, function(input, game_event) -- Global end to catch releases
+        if dragging and
+           ((input.UserInputType == Enum.UserInputType.MouseButton1) or
+            (input.UserInputType == Enum.UserInputType.Touch and (not touch_id or input == touch_id))) then
+            dragging = false
+            touch_id = nil
+        end
+    end)
 end
 
         function library:convert(str)
@@ -528,7 +541,11 @@ end
                 ZIndexBehavior = Enum.ZIndexBehavior.Global;
                 IgnoreGuiInset = true;
             });
-            
+
+           if is_mobile then
+    library["items"].DisplayOrder = 10  -- Prioritizes over Roblox's mobile HUD
+end
+
             library[ "other" ] = library:create( "ScreenGui" , {
                 Parent = coregui;
                 Name = "\0";
