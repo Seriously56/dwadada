@@ -44,6 +44,10 @@
     local lp = players.LocalPlayer 
     local mouse = lp:GetMouse() 
     local gui_offset = gui_service:GetGuiInset().Y
+    local is_mobile = uis.TouchEnabled and not uis.KeyboardEnabled
+    local screen_size = camera.ViewportSize
+    local default_size = dim2(0, 700, 0, 565)
+    local mobile_size = dim2(0, math.max(300, screen_size.X * 0.85), 0, math.max(400, screen_size.Y * 0.75))
 
     local max = math.max 
     local floor = math.floor 
@@ -335,6 +339,18 @@
             end)
         end 
 
+        -- Touchify for mobile hitboxes (new)
+function library:touchify(obj, padding)
+    if not is_mobile then return end  -- Skip on desktop
+    padding = padding or 10
+    local old_size = obj.Size
+    local old_pos = obj.Position
+    -- Enlarge size and adjust position to keep visual centered
+    obj.Size = UDim2.new(old_size.X.Scale, old_size.X.Offset + padding * 2, old_size.Y.Scale, old_size.Y.Offset + padding * 2)
+    obj.Position = UDim2.new(old_pos.X.Scale, old_pos.X.Offset - padding, old_pos.Y.Scale, old_pos.Y.Offset - padding)
+    obj.ZIndex = obj.ZIndex + 1  -- Ensures it's tappable over overlaps
+end
+
         function library:convert(str)
             local values = {}
 
@@ -498,7 +514,7 @@
                 suffix = properties.suffix or properties.Suffix or "tech";
                 name = properties.name or properties.Name or "nebula";
                 game_name = properties.gameInfo or properties.game_info or properties.GameInfo or "Nexus";
-                size = properties.size or properties.Size or dim2(0, 700, 0, 565);
+                size = properties.size or properties.Size or (is_mobile and mobile_size or default_size);
                 selected_tab;
                 items = {};
 
@@ -604,6 +620,37 @@
                     TextSize = 30;
                     BackgroundColor3 = rgb(255, 255, 255)
                 }); library:apply_theme(items[ "title" ], "accent", "TextColor3");
+
+                    -- Mobile close button (new)
+items["close_btn"] = library:create("TextButton", {
+    Parent = items["side_frame"];
+    Name = "CloseBtn";
+    Position = dim2(1, -30, 0, 15);
+    Size = dim2(0, 20, 0, 20);
+    BackgroundColor3 = rgb(255, 255, 255);
+    BackgroundTransparency = 1;
+    Text = "✕";
+    TextColor3 = rgb(200, 200, 200);
+    TextSize = 18;
+    FontFace = fonts.font;  -- Reuse your font
+    BorderSizePixel = 0;
+    AutoButtonColor = false;
+    Visible = is_mobile;
+});
+items["close_btn"].MouseEnter:Connect(function()
+    library:tween(items["close_btn"], {TextColor3 = themes.preset.accent}, Enum.EasingStyle.Quad, 0.2)
+end)
+items["close_btn"].MouseLeave:Connect(function()
+    library:tween(items["close_btn"], {TextColor3 = rgb(200, 200, 200)}, Enum.EasingStyle.Quad, 0.2)
+end)
+items["close_btn"].InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        cfg.toggle_menu(false)
+        if notifications then
+            notifications:create_notification({name = "Menu", info = "Closed via touch", lifetime = 2})
+        end
+    end
+end)
                 
                 items[ "multi_holder" ] = library:create( "Frame" , {
                     Parent = items[ "main" ];
