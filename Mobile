@@ -3808,3 +3808,5 @@
     --end)()
 
     end
+
+return library
