@@ -46,6 +46,7 @@
     local mouse = lp:GetMouse() 
     local gui_offset = gui_service:GetGuiInset().Y
 
+
     local max = math.max 
     local floor = math.floor 
     local min = math.min 
@@ -64,6 +65,13 @@
     local find = table.find 
     local remove = table.remove
     local concat = table.concat
+
+local isMobile = uis.TouchEnabled and not uis.MouseEnabled
+local mobileScale = isMobile and 0.7 or 1
+
+-- Update your window size to be responsive
+-- In your window function, replace the size line with:
+size = properties.size or properties.Size or (isMobile and dim2(0.85, 0, 0.75, 0) or dim2(0, 700, 0, 565))
 -- 
 
 -- Library init
