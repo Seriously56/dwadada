@@ -69,7 +69,8 @@
         config_flags = {},
         connections = {},   
         notifications = {notifs = {}},
-        current_open; 
+        current_open = nil,  -- Fixed this line too
+        cache = {}  -- Added cache initialization
     }
 
     local themes = {
